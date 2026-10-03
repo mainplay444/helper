@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="ToolBox — бесплатный набор полезных онлайн-инструментов.">
+<title>ToolBox — 50+ бесплатных инструментов</title>
+<style>
+:root{--bg:#0b1020;--panel:#121a2d;--panel2:#18233b;--text:#f5f7ff;--muted:#9ba8c2;--accent:#6d7cff;--border:#263451;--danger:#ef6b73}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#09101f,#10182b 55%,#0a1020);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}
+header{padding:42px 20px 28px;text-align:center;border-bottom:1px solid var(--border);background:#0c1426cc;backdrop-filter:blur(12px);position:sticky;top:0;z-index:10}
+h1{margin:0;font-size:42px;letter-spacing:-1px}header p{margin:8px 0 20px;color:var(--muted)}
+.search{max-width:720px;margin:auto;position:relative}.search input{width:100%;padding:15px 18px;border-radius:14px;border:1px solid var(--border);background:#0a1120;color:white;font-size:16px;outline:none}.search input:focus{border-color:var(--accent)}
+.wrap{max-width:1250px;margin:auto;padding:25px 18px 50px}.cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}.cats button{width:auto;margin:0;padding:9px 14px;border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:999px;cursor:pointer}.cats button.active,.cats button:hover{background:var(--accent);border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:16px}.card{background:linear-gradient(145deg,var(--panel),#10182a);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 8px 30px #0002}.card h2{font-size:19px;margin:0 0 7px}.card p{color:var(--muted);font-size:13px;margin:0 0 12px}.card input,.card textarea,.card select{width:100%;padding:10px;margin:5px 0;border:1px solid var(--border);border-radius:9px;background:#0a1120;color:white}.card textarea{min-height:90px;resize:vertical}.card button{width:100%;padding:10px;margin-top:7px;border:0;border-radius:9px;background:var(--accent);color:#fff;font-weight:700;cursor:pointer}.card button.secondary{background:var(--panel2);border:1px solid var(--border)}.out{margin-top:10px;padding:10px;background:#080e1a;border-radius:9px;min-height:38px;white-space:pre-wrap;word-break:break-word}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.check{display:block;color:var(--muted);font-size:13px;margin:7px 0}.check input{width:auto;margin-right:7px}.hidden{display:none!important}.counter{color:var(--muted);font-size:12px;margin-top:6px}.toast{position:fixed;right:18px;bottom:18px;background:#192542;border:1px solid var(--border);padding:12px 16px;border-radius:10px;display:none;z-index:20}.empty{text-align:center;color:var(--muted);padding:50px}.swatch{height:80px;border-radius:10px;margin-top:8px;border:1px solid var(--border)}
+footer{text-align:center;color:#697793;padding:30px;border-top:1px solid var(--border)}
+@media(max-width:600px){h1{font-size:32px}.row{grid-template-columns:1fr}header{padding-top:28px}}
+</style>
+</head>
+<body>
+<header>
+<h1>🛠️ ToolBox</h1>
+<p>50+ бесплатных инструментов в одном сайте</p>
+<div class="search"><input id="search" placeholder="🔎 Найти инструмент..." oninput="filterTools()"></div>
+</header>
+
+<main class="wrap">
+<div class="cats" id="cats"></div>
+<div class="grid" id="grid"></div>
+<div id="empty" class="empty hidden">Ничего не найдено.</div>
+</main>
+<footer>ToolBox © 2026 · Работает прямо в браузере</footer>
+<div id="toast" class="toast"></div>
+
+<script>
+const tools=[
+["Пароли","🔐","Генератор паролей",()=>`
+<input id="pLen" type="number" value="20" min="4" max="200" placeholder="Длина">
+<label class="check"><input id="pUpper" type="checkbox" checked> Заглавные буквы</label>
+<label class="check"><input id="pLower" type="checkbox" checked> Строчные буквы</label>
+<label class="check"><input id="pNum" type="checkbox" checked> Цифры</label>
+<label class="check"><input id="pSym" type="checkbox" checked> Символы</label>
+<button onclick="genPass()">Создать</button><div class="out" id="pOut">—</div>`],
+["Генераторы","🎲","Случайное число",()=>`<div class="row"><input id="rMin" type="number" value="1"><input id="rMax" type="number" value="100"></div><button onclick="randNum()">Сгенерировать</button><div class="out" id="rOut">—</div>`],
+["Генераторы","🎮","Генератор никнеймов",()=>`<button onclick="nick()">Создать ник</button><div class="out" id="nickOut">—</div>`],
+["Генераторы","🎨","Генератор HEX-цвета",()=>`<button onclick="color()">Создать цвет</button><div class="swatch" id="swatch"></div><div class="out" id="colorOut">—</div>`],
+["Разработка","🆔","UUID",()=>`<button onclick="uuid()">Создать UUID</button><div class="out" id="uuidOut">—</div>`],
+["QR","📱","QR-код",()=>`<input id="qr" placeholder="Текст или ссылка"><button onclick="makeQR()">Создать QR</button><div class="out" id="qrOut">QR появится здесь</div>`],
+["Текст","📝","Счётчик текста",()=>`<textarea id="cnt" oninput="countText()" placeholder="Введите текст..."></textarea><div class="counter" id="cntOut">0 символов · 0 слов · 0 строк</div>`],
+["Текст","🔤","Верхний / нижний регистр",()=>`<textarea id="case"></textarea><div class="row"><button onclick="caseUp()">ВЕРХНИЙ</button><button onclick="caseLow()">нижний</button></div>`],
+["Кодирование","🔄","Base64",()=>`<textarea id="b64"></textarea><div class="row"><button onclick="b64enc()">Encode</button><button onclick="b64dec()">Decode</button></div><div class="out" id="b64out">—</div>`],
+["Время","⏱️","Unix Timestamp",()=>`<button onclick="stamp()">Текущий timestamp</button><div class="out" id="stampOut">—</div>`],
+["Время","📅","Дней между датами",()=>`<div class="row"><input id="d1" type="date"><input id="d2" type="date"></div><button onclick="dateDiff()">Рассчитать</button><div class="out" id="dateOut">—</div>`],
+["Математика","➕","Калькулятор",()=>`<input id="calc" placeholder="Например: (12+8)*3/2"><button onclick="calculate()">Посчитать</button><div class="out" id="calcOut">—</div>`],
+["Математика","📊","Проценты",()=>`<input id="percN" type="number" placeholder="Число"><input id="percP" type="number" placeholder="Процент"><button onclick="percent()">Посчитать</button><div class="out" id="percOut">—</div>`],
+["Математика","💰","Скидка",()=>`<input id="price" type="number" placeholder="Цена"><input id="disc" type="number" placeholder="Скидка %"><button onclick="discount()">Рассчитать</button><div class="out" id="discOut">—</div>`],
+["Математика","📐","Площадь круга",()=>`<input id="radius" type="number" placeholder="Радиус"><button onclick="circle()">Рассчитать</button><div class="out" id="circleOut">—</div>`],
+["Математика","📦","Объём куба",()=>`<input id="side" type="number" placeholder="Сторона"><button onclick="cube()">Рассчитать</button><div class="out" id="cubeOut">—</div>`],
+["Математика","⚖️","ИМТ",()=>`<input id="weight" type="number" placeholder="Вес, кг"><input id="height" type="number" placeholder="Рост, см"><button onclick="bmi()">Рассчитать</button><div class="out" id="bmiOut">—</div>`],
+["Единицы","📏","Сантиметры → метры",()=>`<input id="cm" type="number" placeholder="Сантиметры"><button onclick="cmM()">Конвертировать</button><div class="out" id="cmOut">—</div>`],
+["Единицы","🌡️","Цельсий ↔ Фаренгейт",()=>`<input id="temp" type="number" placeholder="Температура"><div class="row"><button onclick="cF()">°C → °F</button><button onclick="fC()">°F → °C</button></div><div class="out" id="tempOut">—</div>`],
+["Единицы","💾","MB → GB",()=>`<input id="mb" type="number" placeholder="MB"><button onclick="mbgb()">Конвертировать</button><div class="out" id="mbOut">—</div>`],
+["Текст","↔️","Удалить пробелы",()=>`<textarea id="spaces"></textarea><button onclick="removeSpaces()">Удалить лишние пробелы</button><div class="out" id="spacesOut">—</div>`],
+["Текст","🔢","Нумератор строк",()=>`<textarea id="numbered"></textarea><button onclick="numberLines()">Пронумеровать</button><div class="out" id="numberedOut">—</div>`],
+["Текст","🧹","Удалить пустые строки",()=>`<textarea id="blank"></textarea><button onclick="blankLines()">Очистить</button><div class="out" id="blankOut">—</div>`],
+["Текст","🔁","Переворот текста",()=>`<textarea id="reverse"></textarea><button onclick="reverseText()">Перевернуть</button><div class="out" id="reverseOut">—</div>`],
+["Текст","🔡","Слова → количество",()=>`<textarea id="wordCount"></textarea><button onclick="wordCount()">Посчитать</button><div class="out" id="wordOut">—</div>`],
+["Кодирование","🔗","URL Encode / Decode",()=>`<textarea id="urlText"></textarea><div class="row"><button onclick="urlEnc()">Encode</button><button onclick="urlDec()">Decode</button></div><div class="out" id="urlOut">—</div>`],
+["Кодирование","💻","HTML Escape",()=>`<textarea id="htmlText"></textarea><button onclick="htmlEscape()">Экранировать</button><div class="out" id="htmlOut">—</div>`],
+["Кодирование","🧩","JSON форматтер",()=>`<textarea id="jsonText" placeholder='{"name":"ToolBox"}'></textarea><button onclick="jsonFormat()">Форматировать</button><div class="out" id="jsonOut">—</div>`],
+["Кодирование","🗜️","JSON минификатор",()=>`<textarea id="jsonMin"></textarea><button onclick="jsonMinify()">Минифицировать</button><div class="out" id="jsonMinOut">—</div>`],
+["Разработка","🔑","Hash SHA-256",()=>`<textarea id="hashText"></textarea><button onclick="sha()">SHA-256</button><div class="out" id="hashOut">—</div>`],
+["Разработка","🕒","ISO дата",()=>`<button onclick="iso()">Текущая ISO дата</button><div class="out" id="isoOut">—</div>`],
+["Генераторы","🔢","Генератор PIN",()=>`<input id="pinLen" type="number" value="6" min="4" max="20"><button onclick="pin()">Создать PIN</button><div class="out" id="pinOut">—</div>`],
+["Генераторы","🎯","Да / Нет",()=>`<button onclick="yesno()">Случайный ответ</button><div class="out" id="yesnoOut">—</div>`],
+["Генераторы","🪙","Монетка",()=>`<button onclick="coin()">Подбросить</button><div class="out" id="coinOut">—</div>`],
+["Генераторы","🎯","Кубик D6",()=>`<button onclick="dice()">Бросить D6</button><div class="out" id="diceOut">—</div>`],
+["Генераторы","🎲","Кубик D20",()=>`<button onclick="dice20()">Бросить D20</button><div class="out" id="dice20Out">—</div>`],
+["Цвета","🌈","RGB → HEX",()=>`<div class="row"><input id="rr" type="number" value="255"><input id="gg" type="number" value="0"></div><input id="bb" type="number" value="0"><button onclick="rgbHex()">Конвертировать</button><div class="out" id="rgbOut">—</div>`],
+["Цвета","🌈","HEX → RGB",()=>`<input id="hex" placeholder="#6d7cff"><button onclick="hexRgb()">Конвертировать</button><div class="out" id="hexOut">—</div>`],
+["Время","⏰","Таймер",()=>`<input id="timerSec" type="number" value="60" min="1"><button onclick="startTimer()">Старт</button><div class="out" id="timerOut">60</div>`],
+["Время","⏲️","Секундомер",()=>`<button onclick="stopwatchStart()">Старт</button><button class="secondary" onclick="stopwatchStop()">Стоп</button><div class="out" id="swOut">0.0 с</div>`],
+["Генераторы","📋","Случайный элемент списка",()=>`<textarea id="list" placeholder="Один вариант на строку"></textarea><button onclick="randomList()">Выбрать</button><div class="out" id="listOut">—</div>`],
+["Текст","🔍","Поиск слова в тексте",()=>`<textarea id="findText"></textarea><input id="findWord" placeholder="Слово"><button onclick="findWord()">Найти</button><div class="out" id="findOut">—</div>`],
+["Текст","🔠","Количество букв",()=>`<textarea id="letters"></textarea><button onclick="letterCount()">Посчитать</button><div class="out" id="lettersOut">—</div>`],
+["Генераторы","🧑","Имя пользователя",()=>`<button onclick="username()">Создать username</button><div class="out" id="userOut">—</div>`],
+["Генераторы","🏷️","Случайный тег",()=>`<button onclick="tag()">Создать тег</button><div class="out" id="tagOut">—</div>`],
+["Единицы","🚗","Км/ч → м/с",()=>`<input id="kmh" type="number"><button onclick="speed()">Конвертировать</button><div class="out" id="speedOut">—</div>`],
+["Единицы","📐","Дюймы → см",()=>`<input id="inch" type="number"><button onclick="inchCm()">Конвертировать</button><div class="out" id="inchOut">—</div>`],
+["Единицы","⚡","Ватты × часы → Wh",()=>`<input id="watts" type="number" placeholder="Вт"><input id="hours" type="number" placeholder="Часы"><button onclick="energy()">Рассчитать</button><div class="out" id="energyOut">—</div>`],
+["Файлы","📄","Скачать текстовый файл",()=>`<textarea id="downloadText" placeholder="Текст файла"></textarea><input id="fileName" value="toolbox.txt"><button onclick="downloadTxt()">Скачать файл</button><div class="out">Файл создаётся локально.</div>`],
+["Утилиты","📋","Копировать текст",()=>`<textarea id="copyText"></textarea><button onclick="copyText()">Копировать</button><div class="out">Кнопка копирует текст в буфер обмена.</div>`],
+["Утилиты","🔊","Громкость / частота",()=>`<input id="freq" type="number" value="440"><button onclick="beep()">Проиграть тон</button><div class="out">Работает через Web Audio API.</div>`],
+["Утилиты","💡","Генератор идей",()=>`<button onclick="idea()">Дать идею</button><div class="out" id="ideaOut">—</div>`],
+["Математика","🧮","Среднее число",()=>`<input id="avg" placeholder="Например: 10, 20, 30"><button onclick="average()">Рассчитать</button><div class="out" id="avgOut">—</div>`],
+["Математика","📈","Рост в процентах",()=>`<input id="oldV" type="number" placeholder="Старое значение"><input id="newV" type="number" placeholder="Новое значение"><button onclick="growth()">Рассчитать</button><div class="out" id="growthOut">—</div>`],
+["Утилиты","🧪","Генератор Lorem Ipsum",()=>`<input id="loremN" type="number" value="3" min="1" max="20"><button onclick="lorem()">Создать абзацы</button><div class="out" id="loremOut">—</div>`]
+];
+
+const cats=["Все",...new Set(tools.map(x=>x[0]))];let active="Все";
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function render(){const q=document.getElementById("search").value.toLowerCase();let shown=0;grid.innerHTML="";tools.forEach((t,i)=>{if((active==="Все"||t[0]===active)&&(`${t[1]} ${t[2]} ${t[0]}`).toLowerCase().includes(q)){shown++;const d=document.createElement("div");d.className="card";d.dataset.i=i;d.innerHTML=`<h2>${t[1]} ${t[2]}</h2><p>Категория: ${t[0]}</p>${t[3]()}`;grid.appendChild(d)}});empty.classList.toggle("hidden",shown>0)}
+function filterTools(){render()}
+function catRender(){catsEl.innerHTML=cats.map(c=>`<button class="${c===active?'active':''}" onclick="active='${c}';catRender();render()">${c}</button>`).join("")}
+const grid=document.getElementById("grid"),empty=document.getElementById("empty"),catsEl=document.getElementById("cats");catRender();render();
+
+function out(id,v){document.getElementById(id).textContent=v}
+function genPass(){let s="";if(pUpper.checked)s+="ABCDEFGHIJKLMNOPQRSTUVWXYZ";if(pLower.checked)s+="abcdefghijklmnopqrstuvwxyz";if(pNum.checked)s+="0123456789";if(pSym.checked)s+="!@#$%^&*()_+-=[]{}";if(!s)return out("pOut","Выбери хотя бы один набор.");let a=new Uint32Array(+pLen.value),r="";crypto.getRandomValues(a);a.forEach(n=>r+=s[n%s.length]);out("pOut",r)}
+function randNum(){let a=+rMin.value,b=+rMax.value;out("rOut",a>b?"Ошибка":Math.floor(Math.random()*(b-a+1))+a)}
+function nick(){let a=["Dark","Mega","Ultra","Cyber","Fire","Ice","Shadow","Lucky","Epic","Nova","Pro","Crazy"],b=["Wolf","Tiger","Dragon","Fox","Miner","Builder","Gamer","Knight","Hunter","Master"];out("nickOut",a[Math.random()*a.length|0]+b[Math.random()*b.length|0]+(Math.random()*9999|0))}
+function color(){let c="#"+crypto.getRandomValues(new Uint8Array(3)).reduce((s,x)=>s+x.toString(16).padStart(2,"0"),"");swatch.style.background=c;out("colorOut",c)}
+function uuid(){out("uuidOut",crypto.randomUUID())}
+function makeQR(){let t=encodeURIComponent(qr.value);qrOut.innerHTML=`<img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${t}" alt="QR" style="max-width:220px;border-radius:8px">`}
+function countText(){let t=cnt.value;out("cntOut",`${t.length} символов · ${(t.trim().match(/\S+/g)||[]).length} слов · ${t?t.split("\\n").length:0} строк`)}
+function caseUp(){case.value=case.value.toUpperCase()}function caseLow(){case.value=case.value.toLowerCase()}
+function b64enc(){try{out("b64out",btoa(unescape(encodeURIComponent(b64.value))))}catch{out("b64out","Ошибка")}}
+function b64dec(){try{out("b64out",decodeURIComponent(escape(atob(b64.value))))}catch{out("b64out","Неверный Base64")}}
+function stamp(){out("stampOut",Math.floor(Date.now()/1000))}
+function dateDiff(){let a=new Date(d1.value),b=new Date(d2.value);out("dateOut",isNaN(a)||isNaN(b)?"Выбери обе даты":Math.abs(Math.round((b-a)/86400000))+" дней")}
+function calculate(){try{let x=calc.value.replace(/[^0-9+\-*/().% ]/g,"");out("calcOut",Function("return "+x)())}catch{out("calcOut","Ошибка выражения")}}
+function percent(){out("percOut",(+percN.value*+percP.value/100))}
+function discount(){let p=+price.value,d=+disc.value;out("discOut",`После скидки: ${(p*(1-d/100)).toFixed(2)}\nЭкономия: ${(p*d/100).toFixed(2)}`)}
+function circle(){out("circleOut",(Math.PI*radius.value**2).toFixed(4))}
+function cube(){out("cubeOut",(side.value**3))}
+function bmi(){let v=+weight.value/(+height.value/100)**2;out("bmiOut",isFinite(v)?v.toFixed(2):"Проверь данные")}
+function cmM(){out("cmOut",(+cm.value/100)+" м")}
+function cF(){out("tempOut",(+temp.value*9/5+32).toFixed(2)+" °F")}
+function fC(){out("tempOut",((+temp.value-32)*5/9).toFixed(2)+" °C")}
+function mbgb(){out("mbOut",(+mb.value/1024).toFixed(4)+" GB")}
+function removeSpaces(){spacesOut.textContent=spaces.value.trim().replace(/\s+/g," ")}
+function numberLines(){numberedOut.textContent=numbered.value.split("\\n").map((x,i)=>(i+1)+". "+x).join("\\n")}
+function blankLines(){blankOut.textContent=blank.value.split("\\n").filter(x=>x.trim()).join("\\n")}
+function reverseText(){reverseOut.textContent=[...reverse.value].reverse().join("")}
+function wordCount(){out("wordOut",(wordCount.value.trim().match(/\S+/g)||[]).length+" слов")}
+function urlEnc(){out("urlOut",encodeURIComponent(urlText.value))}function urlDec(){try{out("urlOut",decodeURIComponent(urlText.value))}catch{out("urlOut","Ошибка")}}
+function htmlEscape(){out("htmlOut",htmlText.value.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])))}
+function jsonFormat(){try{out("jsonOut",JSON.stringify(JSON.parse(jsonText.value),null,2))}catch{out("jsonOut","Неверный JSON")}}
+function jsonMinify(){try{out("jsonMinOut",JSON.stringify(JSON.parse(jsonMin.value)))}catch{out("jsonMinOut","Неверный JSON")}}
+async function sha(){let b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(hashText.value));out("hashOut",[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""))}
+function iso(){out("isoOut",new Date().toISOString())}
+function pin(){let n=+pinLen.value,a=new Uint32Array(n);crypto.getRandomValues(a);out("pinOut",[...a].map(x=>x%10).join(""))}
+function yesno(){out("yesnoOut",Math.random()<.5?"Да":"Нет")}function coin(){out("coinOut",Math.random()<.5?"Орёл":"Решка")}function dice(){out("diceOut",1+Math.random()*6|0)}function dice20(){out("dice20Out",1+Math.random()*20|0)}
+function rgbHex(){let c=[rr.value,gg.value,bb.value].map(x=>Math.max(0,Math.min(255,+x)).toString(16).padStart(2,"0")).join("");out("rgbOut","#"+c)}
+function hexRgb(){let h=hex.value.replace("#","");if(!/^[0-9a-fA-F]{6}$/.test(h))return out("hexOut","Неверный HEX");out("hexOut",`RGB(${parseInt(h.slice(0,2),16)}, ${parseInt(h.slice(2,4),16)}, ${parseInt(h.slice(4),16)})`)}
+let timerId;function startTimer(){clearInterval(timerId);let n=+timerSec.value;out("timerOut",n);timerId=setInterval(()=>{n--;out("timerOut",n);if(n<=0){clearInterval(timerId);beep()}},1000)}
+let swStart=0,swId;function stopwatchStart(){if(swId)return;swStart=Date.now()-(parseFloat(swOut.textContent)||0)*1000;swId=setInterval(()=>out("swOut",((Date.now()-swStart)/1000).toFixed(1)+" с"),100)}
+function stopwatchStop(){clearInterval(swId);swId=null}
+function randomList(){let a=list.value.split("\\n").map(x=>x.trim()).filter(Boolean);out("listOut",a.length?a[Math.random()*a.length|0]:"Пусто")}
+function findWord(){let t=findText.value.toLowerCase(),w=findWord.value.toLowerCase();out("findOut",w?`Найдено: ${(t.split(w).length-1)} раз`:"Введите слово")}
+function letterCount(){out("lettersOut",(letters.value.match(/[A-Za-zА-Яа-яЁё]/g)||[]).length+" букв")}
+function username(){out("userOut","user_"+Math.random().toString(36).slice(2,10))}
+function tag(){out("tagOut","#"+["gaming","minecraft","tech","tools","web","coding","games"][Math.random()*7|0])}
+function speed(){out("speedOut",(+kmh.value/3.6).toFixed(3)+" м/с")}
+function inchCm(){out("inchOut",(+inch.value*2.54).toFixed(2)+" см")}
+function energy(){out("energyOut",(+watts.value*+hours.value)+" Wh")}
+function downloadTxt(){let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([downloadText.value],{type:"text/plain"}));a.download=fileName.value||"toolbox.txt";a.click();URL.revokeObjectURL(a.href)}
+async function copyText(){try{await navigator.clipboard.writeText(copyText.value);toast("Скопировано!")}catch{toast("Не удалось скопировать")}}
+function beep(){let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.frequency.value=+freq.value;o.connect(g);g.connect(c.destination);o.start();g.gain.setValueAtTime(.15,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+.35);o.stop(c.currentTime+.35)}
+function idea(){out("ideaOut",["сайт с калькуляторами","генератор Minecraft-команд","каталог бесплатных игр","PC Builder","трекер школьных заданий","генератор QR-кодов","конвертер файлов","сайт для изучения немецкого"][Math.random()*8|0])}
+function average(){let a=avg.value.split(",").map(Number).filter(Number.isFinite);out("avgOut",a.length?(a.reduce((x,y)=>x+y,0)/a.length).toFixed(2):"Ошибка")}
+function growth(){let a=+oldV.value,b=+newV.value;out("growthOut",a?(((b-a)/a)*100).toFixed(2)+" %":"Ошибка")}
+function lorem(){let s="Lorem ipsum dolor sit amet consectetur adipiscing elit. Integer posuere, neque sed feugiat aliquam, sapien erat consequat massa, vitae tincidunt nulla mi non arcu.";out("loremOut",Array.from({length:+loremN.value||1},()=>s).join("\\n\\n"))}
+function toast(t){let x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1800)}
+</script>
+</body>
+</html>
